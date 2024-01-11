@@ -3,7 +3,11 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import {polarity} from 'polarity';
+import { get } from "http";
+import Sentiment from 'sentiment'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import celebreties from './celebreties.json'
+import { useRouter } from "next/navigation";
 
 export default function Home({ params }: { params: { people: string } }) {
 
@@ -12,75 +16,111 @@ export default function Home({ params }: { params: { people: string } }) {
     const [profileImage, setProfileImage] = useState('')
     const name = params.people.replace('%20', ' ')
     const [sentiment, setSentiment] = useState() as any
+    const [loading, setLoading] = useState(false)
+    const celebretiesArray = celebreties as any
+    const router = useRouter()
 
     const fetchData = async () => {
-        const search = params.people.replace('%20', ' ')
-        const res = await fetch(`https://newsapi.org/v2/everything?q=${search}&apiKey=57f7fd2462f5423184a0102b3a533b50`)
-        const wiki = await fetch(`https://en.wikipedia.org/w/rest.php/v1/page/${search}`)
-        const wikidata = await wiki.json()
-        setWikidata(wikidata)
-        const data = await res.json()
-        setData(data)
-        const profileImage = await fetch(`/api/${search}`)
-        const profileImageData = await profileImage.json()
-        const pages = profileImageData.query.pages;
-
-        // Utiliser Object.values() pour obtenir les valeurs de l'objet pages
-        const pagesArray = Object.values(pages);
-
-        // Itérer sur les pages pour trouver la première page avec un thumbnail.source
-        for (const page of pagesArray as any) {
+        try {
+          setLoading(true);
+          const search = params.people.replace('%20', ' ');
+    
+          // Fetch news data
+          const res = await fetch(`https://newsapi.org/v2/everything?q=${search}&apiKey=57f7fd2462f5423184a0102b3a533b50`);
+          const data = await res.json();
+          setData(data);
+    
+          // Fetch Wikipedia data
+          const wiki = await fetch(`https://en.wikipedia.org/w/rest.php/v1/page/${search}`);
+          const wikidata = await wiki.json();
+          setWikidata(wikidata);
+    
+          // Fetch profile image data
+          const profileImage = await fetch(`/api/${search}`);
+          const profileImageData = await profileImage.json();
+          const pages = profileImageData.query.pages;
+    
+          // Iterate over pages to find the first page with a thumbnail.source
+          const pagesArray = Object.values(pages);
+          for (const page of pagesArray as any) {
             if (page.thumbnail && page.thumbnail.source) {
-                const imageUrl = page.thumbnail.source;
-                setProfileImage(imageUrl)
-                break; // Sortir de la boucle dès que la première image est trouvée
+              const imageUrl = page.thumbnail.source;
+              setProfileImage(imageUrl);
+              break;
             }
+          }
+    
+          const sentiment = new Sentiment();
+          const test = concatenerArticles(data)
+          if (test) {
+            const result = sentiment.analyze(test)
+            setSentiment(result)
+          }
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        } finally {
+          setLoading(false);
+
+          // kill the sentiment analysis
+        const sentiment = new Sentiment();
         }
+      };
+
+    function concatenerArticles(data: any[]) {
+        let articles = ''
+        data?.articles?.map((article: { description: string; }) => {
+            articles += article.description + ' '
+        })
+        return articles
     }
 
-    function tokenize(value: string) {
-        const match = value.toLowerCase().match(/\S+/g)
-        return match ? [...match] : []
-      }
-
-      const paragraphToWordArray = (paragraph: string) => {
-        // Supprimer les caractères de ponctuation et diviser le paragraphe en mots
-        const words = paragraph?.replace(/[.,\/#!$%\^&[[|\*;:{}=\-_`~()]/g, '').split(',');
-    
-        // séparer les mots par des virgules
-        const filteredWords = words?.map((word) => word.trim());
-
-
-      
-        return filteredWords;
-      }
-
-    async function getSentiment() {
-        const sentiment = polarity(wikidata)
-        console.log(sentiment)
-        setSentiment(sentiment)
+    function pushToRandomCelebreties() {
+        // nombre aléatoire entre 0 et la taille du tableau
+        const randomCelebreties = Math.floor(Math.random() * celebretiesArray.length)
+        router.push(`/${celebretiesArray[randomCelebreties].name}`)
     }
 
     useEffect(() => {
         fetchData()
-        getSentiment()
-        console.log(profileImage)
-        console.log(wikidata)
     }, [params?.people])
 
     return (
         <main className="flex flex-col items-center justify-between">
-            <div className='flex flex-col gap-6 text-center h-screen justify-center items-center p-40'>
-                <img className="w-64 h-64 rounded object-cover" src={profileImage} alt="" />
+            <div className='flex flex-col gap-6 text-center justify-center items-center p-8'>
+                {profileImage ? <img alt="" className='rounded-full w-40 h-40 object-cover' src={profileImage} /> : <div className='rounded-full w-40 h-40 bg-gray-300'></div>}
                 <h1 className='text-2xl font-bold'>
                     {params?.people ? name : 'Aucune personne trouvée'}
                 </h1>
                 <h2 className='text-lg font-semibold'>
-                    {sentiment ? JSON.stringify(sentiment) : 'Aucun sentiment trouvé'}
+                    {sentiment ? JSON.stringify(sentiment.comparative * 1000) : 'Aucun sentiment trouvé'}
                 </h2>
-                <span className="h-1/2 overflow-y-scroll w-screen">{JSON.stringify(data)}</span>
-                <span className="h-1/2 overflow-y-scroll w-screen">{paragraphToWordArray(wikidata.source)}</span>
-                <span className="h-1/2 overflow-y-scroll w-screen">{JSON.stringify(wikidata.source)}</span>
+                <div>
+                    { sentiment && sentiment.comparative * 1000 > 20 ? <p className="text-green-800">Trust</p> : <p className="text-red-800">Don't trust</p>}
+                </div>
+                <div className="flex gap-2">
+                    <Button variant={'secondary'} onClick={()=> router.push(`/`)} className='rounded-full w-fit'>Accueil</Button>
+                <Button onClick={()=> pushToRandomCelebreties()} className='rounded-full w-fit'>Aléatoire</Button>
+                </div>
+            </div>
+            <div className="flex flex-col gap-6 p-8 h-full">
+                <h2 className="text-2xl font-bold">Articles</h2>
+                <div className="h-[50vh] overflow-y-scroll grid md:grid-cols-3 gap-2">
+                {data?.articles?.map((article: { title: string; description: string; url: string; }) => {
+                    return (
+                        <Card>
+                            <CardHeader>
+                            <CardTitle>{article.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                            <p>{article.description}</p>
+                            </CardContent>
+                            <CardFooter>
+                            <Button onClick={()=> window.open(article.url, '_blank')}>Read more</Button>
+                            </CardFooter>
+                        </Card>
+                    )
+                })}
+                </div>
             </div>
         </main>
     )
