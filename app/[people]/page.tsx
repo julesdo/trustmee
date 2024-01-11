@@ -68,6 +68,7 @@ export default function Home({ params }: { params: { people: string } }) {
 
     function concatenerArticles(data: any[]) {
         let articles = ''
+        {/*@ts-ignore */}
         data?.articles?.map((article: { description: string; }) => {
             articles += article.description + ' '
         })
@@ -105,7 +106,8 @@ export default function Home({ params }: { params: { people: string } }) {
             <div className="flex flex-col gap-6 p-8 h-full">
                 <h2 className="text-2xl font-bold">Articles</h2>
                 <div className="h-[50vh] overflow-y-scroll grid md:grid-cols-3 gap-2">
-                {data?.articles?.map((article: { title: string; description: string; url: string; }) => {
+                    {/*@ts-ignore */}
+                {data.articles.map((article: { title: string; description: string; url: string; }) => {
                     return (
                         <Card>
                             <CardHeader>
