@@ -49,7 +49,7 @@ export default function Home() {
       <div className='flex flex-wrap'>
         {celebretiesImages.map((celebretie: any) => {
           return (
-            <TooltipProvider>
+            <TooltipProvider key={celebretie.name}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div onClick={() => router.push(`/${celebretie.name}`)} className='hover:border-2 hover:border-blue-500 hover:cursor-pointer border-2 border-white rounded-full'>

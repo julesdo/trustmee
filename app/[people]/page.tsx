@@ -96,11 +96,11 @@ export default function Home({ params }: { params: { people: string } }) {
                     {sentiment ? JSON.stringify(sentiment.comparative * 1000) : 'Aucun sentiment trouvé'}
                 </h2>
                 <div>
-                    { sentiment && sentiment.comparative * 1000 > 20 ? <p className="text-green-800">Trust</p> : <p className="text-red-800">Don't trust</p>}
+                    { sentiment && sentiment.comparative * 1000 > 20 ? <p className="text-green-800">Trust</p> : <p className="text-red-800">Dont trust</p>}
                 </div>
                 <div className="flex gap-2">
                     <Button variant={'secondary'} onClick={()=> router.push(`/`)} className='rounded-full w-fit'>Accueil</Button>
-                <Button onClick={()=> pushToRandomCelebreties()} className='rounded-full w-fit'>Aléatoire</Button>
+                <Button onClick={()=> pushToRandomCelebreties()} className='rounded-full w-fit'>Aleatoire</Button>
                 </div>
             </div>
             <div className="flex flex-col gap-6 p-8 h-full">
@@ -109,7 +109,7 @@ export default function Home({ params }: { params: { people: string } }) {
                     {/*@ts-ignore */}
                 {data.articles.map((article: { title: string; description: string; url: string; }) => {
                     return (
-                        <Card>
+                        <Card key={article.title}>
                             <CardHeader>
                             <CardTitle>{article.title}</CardTitle>
                             </CardHeader>
