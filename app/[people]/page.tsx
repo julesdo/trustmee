@@ -107,7 +107,7 @@ export default function Home({ params }: { params: { people: string } }) {
                 <h2 className="text-2xl font-bold">Articles</h2>
                 <div className="h-[50vh] overflow-y-scroll grid md:grid-cols-3 gap-2">
                     {/*@ts-ignore */}
-                {data.articles.map((article: { title: string; description: string; url: string; }) => {
+                {data?.articles?.map((article: { title: string; description: string; url: string; }) => {
                     return (
                         <Card key={article.title}>
                             <CardHeader>
