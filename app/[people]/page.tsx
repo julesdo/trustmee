@@ -19,6 +19,7 @@ export default function Home({ params }: { params: { people: string } }) {
     const [loading, setLoading] = useState(false)
     const celebretiesArray = celebreties as any
     const router = useRouter()
+    const [birthDate, setBirthDate] = useState('') as any
 
     const fetchData = async () => {
         try {
@@ -26,7 +27,7 @@ export default function Home({ params }: { params: { people: string } }) {
           const search = params.people.replace('%20', ' ');
     
           // Fetch news data
-          const res = await fetch(`https://newsapi.org/v2/everything?q=${search}&apiKey=57f7fd2462f5423184a0102b3a533b50`);
+          const res = await fetch(`https://newsapi.org/v2/everything?q=${search}&apiKey=ec8abc8368e7441ca2a7b4aa435e2fe8`);
           const data = await res.json();
           setData(data);
     
@@ -104,7 +105,13 @@ export default function Home({ params }: { params: { people: string } }) {
                 </div>
             </div>
             <div className="flex flex-col gap-6 p-8 h-full">
+                <div className="flex justify-between">
                 <h2 className="text-2xl font-bold">Articles</h2>
+                <p>
+                    {/*@ts-ignore */}
+                    {data?.totalResults} articles trouvés
+                </p>
+                </div>
                 <div className="h-[50vh] overflow-y-scroll grid md:grid-cols-3 gap-2">
                     {/*@ts-ignore */}
                 {data?.articles?.map((article: { title: string; description: string; url: string; }) => {
